@@ -1,0 +1,8 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dispatch.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
