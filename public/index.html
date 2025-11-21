@@ -7,14 +7,36 @@
 </head>
 <body>
   <h1>AI Dispatch Board</h1>
+
+  <h2>Create Dispatch</h2>
   <form id="dispatch-form">
     <input type="text" id="description" placeholder="Description" required>
+    <input type="number" id="driverId" placeholder="Driver ID (optional)">
     <button type="submit">Create Dispatch</button>
   </form>
   <ul id="dispatch-list"></ul>
+
+  <h2>Create Driver</h2>
+  <form id="driver-form">
+    <input type="text" id="driver-name" placeholder="Driver Name" required>
+    <input type="text" id="license-number" placeholder="License Number" required>
+    <button type="submit">Create Driver</button>
+  </form>
+  <ul id="driver-list"></ul>
+
+  <h2>Create Invoice</h2>
+  <form id="invoice-form">
+    <input type="number" id="invoice-dispatchId" placeholder="Dispatch ID" required>
+    <input type="number" id="amount" placeholder="Amount" required>
+    <input type="text" id="status" placeholder="Status" required>
+    <button type="submit">Create Invoice</button>
+  </form>
+  <ul id="invoice-list"></ul>
+
   <script>
     const socket = io();
-    async function fetchList() {
+
+    async function fetchDispatches() {
       const res = await fetch('/api/dispatch/list');
       const data = await res.json();
       const listEl = document.getElementById('dispatch-list');
@@ -25,19 +47,80 @@
         listEl.appendChild(li);
       });
     }
-    fetchList();
-    socket.on('board-updated', data => {
-      fetchList();
+
+    async function fetchDrivers() {
+      const res = await fetch('/api/driver/list');
+      const data = await res.json();
+      const listEl = document.getElementById('driver-list');
+      listEl.innerHTML = '';
+      data.drivers.forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = `${item.id}: ${item.name} (${item.licenseNumber})`;
+        listEl.appendChild(li);
+      });
+    }
+
+    async function fetchInvoices() {
+      const res = await fetch('/api/invoice/list');
+      const data = await res.json();
+      const listEl = document.getElementById('invoice-list');
+      listEl.innerHTML = '';
+      data.invoices.forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = `${item.id}: ${item.dispatchId} - ${item.amount} (${item.status})`;
+        listEl.appendChild(li);
+      });
+    }
+
+    fetchDispatches();
+    fetchDrivers();
+    fetchInvoices();
+
+    socket.on('board-updated', () => {
+      fetchDispatches();
     });
+
     document.getElementById('dispatch-form').addEventListener('submit', async e => {
       e.preventDefault();
       const description = document.getElementById('description').value;
+      const driverId = document.getElementById('driverId').value || null;
       await fetch('/api/dispatch/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description })
+        body: JSON.stringify({ description, driverId: driverId ? parseInt(driverId) : undefined })
       });
       document.getElementById('description').value = '';
+      document.getElementById('driverId').value = '';
+    });
+
+    document.getElementById('driver-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const name = document.getElementById('driver-name').value;
+      const licenseNumber = document.getElementById('license-number').value;
+      await fetch('/api/driver/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, licenseNumber })
+      });
+      document.getElementById('driver-name').value = '';
+      document.getElementById('license-number').value = '';
+      fetchDrivers();
+    });
+
+    document.getElementById('invoice-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const dispatchId = parseInt(document.getElementById('invoice-dispatchId').value);
+      const amount = parseFloat(document.getElementById('amount').value);
+      const status = document.getElementById('status').value;
+      await fetch('/api/invoice/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dispatchId, amount, status })
+      });
+      document.getElementById('invoice-dispatchId').value = '';
+      document.getElementById('amount').value = '';
+      document.getElementById('status').value = '';
+      fetchInvoices();
     });
   </script>
 </body>
