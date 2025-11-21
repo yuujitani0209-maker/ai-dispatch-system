@@ -13,8 +13,13 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
 // modules
-const dispatch = require("./modules/dispatch");
+const dispatch = require("../srcmodules/dispatch");
+const driver = require("../srcmodules/driver");
+const invoice = require("../srcmodules/invoice");
+
 app.use("/api/dispatch", dispatch);
+app.use("/api/driver", driver);
+app.use("/api/invoice", invoice);
 
 // socket.io live board
 io.on("connection", (socket) => {
