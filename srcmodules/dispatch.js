@@ -1,16 +1,26 @@
 const express = require('express');
 const router = express.Router();
 
-// Example endpoint to check status
-router.get('/', async (req, res) => {
-  res.json({ status: 'dispatch ok' });
+// In-memory dispatches array for MVP demonstration
+const dispatches = [];
+
+// GET / - status
+router.get('/', (req, res) => {
+  res.json({ status: 'dispatch module ok' });
 });
 
-// Example endpoint to create dispatch
-router.post('/create', async (req, res) => {
+// GET /list - return all dispatches
+router.get('/list', (req, res) => {
+  res.json({ dispatches });
+});
+
+// POST /create - create new dispatch
+router.post('/create', (req, res) => {
   const payload = req.body;
-  // TODO: implement logic
-  res.json({ message: 'dispatch created', payload });
+  const id = dispatches.length + 1;
+  const dispatch = { id, ...payload };
+  dispatches.push(dispatch);
+  res.json({ message: 'dispatch created', dispatch });
 });
 
 module.exports = router;
