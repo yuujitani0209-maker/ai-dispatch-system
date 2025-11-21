@@ -6,3 +6,79 @@ datasource db {
 generator client {
   provider = "prisma-client-js"
 }
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  role      String
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  driver    Driver?  @relation(fields: [driverId], references: [id])
+  driverId  Int?
+  dispatches Dispatch[] @relation("UserDispatches")
+}
+
+model Driver {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  licenseNumber String
+  truck     Truck?
+  dispatches Dispatch[] @relation("DriverDispatches")
+}
+
+model Truck {
+  id        Int      @id @default(autoincrement())
+  plateNumber String  @unique
+  capacity   Int?
+  driver    Driver?   @relation(fields: [driverId], references: [id])
+  driverId  Int?
+  dispatches Dispatch[]
+}
+
+model Cargo {
+  id            Int    @id @default(autoincrement())
+  description   String
+  weight        Float
+  volume        Float?
+  pickupLocation  String
+  dropoffLocation String
+  pickupDate    DateTime?
+  dropoffDate   DateTime?
+  dispatch      Dispatch? @relation(fields: [dispatchId], references: [id])
+  dispatchId    Int?
+}
+
+model Dispatch {
+  id        Int    @id @default(autoincrement())
+  cargo     Cargo? @relation(fields: [cargoId], references: [id])
+  cargoId   Int?
+  driver    Driver? @relation("DriverDispatches", fields: [driverId], references: [id])
+  driverId  Int?
+  user      User?  @relation("UserDispatches", fields: [userId], references: [id])
+  userId    Int?
+  truck     Truck? @relation(fields: [truckId], references: [id])
+  truckId   Int?
+  status    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Log {
+  id        Int     @id @default(autoincrement())
+  message   String
+  createdAt DateTime @default(now())
+  user      User?   @relation(fields: [userId], references: [id])
+  userId    Int?
+}
+
+model Invoice {
+  id         Int      @id @default(autoincrement())
+  dispatch   Dispatch  @relation(fields: [dispatchId], references: [id])
+  dispatchId Int
+  amount     Float
+  issuedAt   DateTime @default(now())
+  paid       Boolean  @default(false)
+}
