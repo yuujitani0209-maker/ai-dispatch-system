@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Dispatch Board</title>
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+  <h1>AI Dispatch Board</h1>
+  <form id="dispatch-form">
+    <input type="text" id="description" placeholder="Description" required>
+    <button type="submit">Create Dispatch</button>
+  </form>
+  <ul id="dispatch-list"></ul>
+  <script>
+    const socket = io();
+    async function fetchList() {
+      const res = await fetch('/api/dispatch/list');
+      const data = await res.json();
+      const listEl = document.getElementById('dispatch-list');
+      listEl.innerHTML = '';
+      data.dispatches.forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = `${item.id}: ${JSON.stringify(item)}`;
+        listEl.appendChild(li);
+      });
+    }
+    fetchList();
+    socket.on('board-updated', data => {
+      fetchList();
+    });
+    document.getElementById('dispatch-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const description = document.getElementById('description').value;
+      await fetch('/api/dispatch/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description })
+      });
+      document.getElementById('description').value = '';
+    });
+  </script>
+</body>
+</html>
