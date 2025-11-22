@@ -7,18 +7,16 @@ const jwt = require('jsonwebtoken');
 const dispatch = require('../srcmodules/dispatch');
 const driver = require('../srcmodules/driver');
 const invoice = require('../srcmodules/invoice');
+const order = require('../srcmodules/order');
 const ai = require('../srcmodules/ai');
+
+const SECRET_KEY = process.env.SECRET_KEY || 'your_secret_key';
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: {
-    origin: '*',
-    methods: ['GET', 'POST'],
-  },
+  cors: { origin: '*', methods: ['GET','POST'] },
 });
-
-const SECRET_KEY = 'your_secret_key';
 
 app.use(cors());
 app.use(express.json());
@@ -27,7 +25,7 @@ app.use(express.static('public'));
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
-  if (!token) return res.sendStatus(401);
+  if (token == null) return res.sendStatus(401);
   jwt.verify(token, SECRET_KEY, (err, user) => {
     if (err) return res.sendStatus(403);
     req.user = user;
@@ -54,6 +52,7 @@ app.post('/api/login', (req, res) => {
 app.use('/api/dispatch', authenticateToken, dispatch);
 app.use('/api/driver', authenticateToken, driver);
 app.use('/api/invoice', authenticateToken, invoice);
+app.use('/api/order', authenticateToken, order);
 app.use('/api/ai', authenticateToken, ai);
 
 io.on('connection', (socket) => {
@@ -62,11 +61,11 @@ io.on('connection', (socket) => {
     io.emit('board-updated', data);
   });
   socket.on('disconnect', () => {
-    console.log('Dispatcher disconnected');
+  console.log('Dispatcher disconnected');
   });
 });
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Server listening on port ${PORT}`);
 });
