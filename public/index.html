@@ -1,35 +1,35 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>AI Dispatch Board</title>
+  <title>AI配車ボード</title>
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 </head>
 <body>
-  <h1>AI Dispatch Board</h1>
+  <h1>AI配車ボード</h1>
 
-  <h2>Create Dispatch</h2>
+  <h2>配車を作成</h2>
   <form id="dispatch-form">
-    <input type="text" id="description" placeholder="Description" required>
-    <input type="number" id="driverId" placeholder="Driver ID (optional)">
-    <button type="submit">Create Dispatch</button>
+    <input type="text" id="description" placeholder="説明" required>
+    <input type="number" id="driverId" placeholder="ドライバーID（任意）">
+    <button type="submit">配車を作成</button>
   </form>
   <ul id="dispatch-list"></ul>
 
-  <h2>Create Driver</h2>
+  <h2>ドライバーを作成</h2>
   <form id="driver-form">
-    <input type="text" id="driver-name" placeholder="Driver Name" required>
-    <input type="text" id="license-number" placeholder="License Number" required>
-    <button type="submit">Create Driver</button>
+    <input type="text" id="driver-name" placeholder="ドライバー名" required>
+    <input type="text" id="license-number" placeholder="免許番号" required>
+    <button type="submit">ドライバーを作成</button>
   </form>
   <ul id="driver-list"></ul>
 
-  <h2>Create Invoice</h2>
+  <h2>請求書を作成</h2>
   <form id="invoice-form">
-    <input type="number" id="invoice-dispatchId" placeholder="Dispatch ID" required>
-    <input type="number" id="amount" placeholder="Amount" required>
-    <input type="text" id="status" placeholder="Status" required>
-    <button type="submit">Create Invoice</button>
+    <input type="number" id="invoice-dispatchId" placeholder="配車ID" required>
+    <input type="number" id="amount" placeholder="金額" required>
+    <input type="text" id="status" placeholder="ステータス" required>
+    <button type="submit">請求書を作成</button>
   </form>
   <ul id="invoice-list"></ul>
 
