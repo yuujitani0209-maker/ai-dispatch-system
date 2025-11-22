@@ -7,12 +7,14 @@
 </head>
 <body>
   <h1>AI配車ボード</h1>
+
   <!-- 部署選択 -->
   <label for="department">部署を選択:</label>
   <select id="department">
     <option value="dispatch">配車部門</option>
     <option value="driver">ドライバー部門</option>
     <option value="invoice">請求書部門</option>
+    <option value="order">注文インポート</option>
   </select>
 
   <!-- 配車部門 -->
@@ -49,10 +51,20 @@
     <ul id="invoice-list"></ul>
   </div>
 
+  <!-- 注文インポート部門 -->
+  <div id="order-section" style="display:none;">
+    <h2>注文データをインポート</h2>
+    <form id="order-form">
+      <input type="file" id="order-file" accept=".json,.csv" required>
+      <button type="submit">注文をインポート</button>
+    </form>
+    <ul id="order-list"></ul>
+  </div>
+
   <script>
     const socket = io();
 
-    // データ取得
+    // fetch functions
     async function fetchDispatches() {
       const res = await fetch('/api/dispatch/list', { headers: { 'Authorization': '' }});
       const data = await res.json();
@@ -64,6 +76,7 @@
         list.appendChild(li);
       });
     }
+
     async function fetchDrivers() {
       const res = await fetch('/api/driver/list', { headers: { 'Authorization': '' }});
       const data = await res.json();
@@ -75,6 +88,7 @@
         list.appendChild(li);
       });
     }
+
     async function fetchInvoices() {
       const res = await fetch('/api/invoice/list', { headers: { 'Authorization': '' }});
       const data = await res.json();
@@ -87,6 +101,7 @@
       });
     }
 
+    // call fetch functions
     fetchDispatches();
     fetchDrivers();
     fetchInvoices();
@@ -95,57 +110,75 @@
       fetchDispatches();
     });
 
-    // フォーム送信処理
+    // dispatch form
     document.getElementById('dispatch-form').addEventListener('submit', async e => {
       e.preventDefault();
       const description = document.getElementById('description').value;
-      const driverId   = document.getElementById('driverId').value;
+      const driverId = document.getElementById('driverId').value;
       await fetch('/api/dispatch/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': '' },
         body: JSON.stringify({ description, driverId: driverId ? Number(driverId) : null, status: 'pending' })
       });
       document.getElementById('description').value = '';
-      document.getElementById('driverId').value   = '';
+      document.getElementById('driverId').value = '';
       fetchDispatches();
     });
 
+    // driver form
     document.getElementById('driver-form').addEventListener('submit', async e => {
       e.preventDefault();
-      const name         = document.getElementById('driver-name').value;
+      const name = document.getElementById('driver-name').value;
       const licenseNumber = document.getElementById('license-number').value;
       await fetch('/api/driver/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': '' },
         body: JSON.stringify({ name, licenseNumber })
       });
-      document.getElementById('driver-name').value     = '';
+      document.getElementById('driver-name').value = '';
       document.getElementById('license-number').value = '';
       fetchDrivers();
     });
 
+    // invoice form
     document.getElementById('invoice-form').addEventListener('submit', async e => {
       e.preventDefault();
       const dispatchId = Number(document.getElementById('invoice-dispatchId').value);
-      const amount     = Number(document.getElementById('amount').value);
-      const status     = document.getElementById('status').value;
+      const amount = Number(document.getElementById('amount').value);
+      const status = document.getElementById('status').value;
       await fetch('/api/invoice/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': '' },
         body: JSON.stringify({ dispatchId, amount, status })
       });
       document.getElementById('invoice-dispatchId').value = '';
-      document.getElementById('amount').value             = '';
-      document.getElementById('status').value             = '';
+      document.getElementById('amount').value = '';
+      document.getElementById('status').value = '';
       fetchInvoices();
     });
 
-    // 部署選択による表示切り替え
+    // order import form
+    document.getElementById('order-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const fileInput = document.getElementById('order-file');
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+      await fetch('/api/order/import', {
+        method: 'POST',
+        headers: { 'Authorization': '' },
+        body: formData
+      });
+      fileInput.value = '';
+      fetchDispatches();
+    });
+
+    // department change
     document.getElementById('department').addEventListener('change', e => {
       const value = e.target.value;
       document.getElementById('dispatch-section').style.display = value === 'dispatch' ? 'block' : 'none';
-      document.getElementById('driver-section').style.display   = value === 'driver'   ? 'block' : 'none';
-      document.getElementById('invoice-section').style.display  = value === 'invoice'  ? 'block' : 'none';
+      document.getElementById('driver-section').style.display = value === 'driver' ? 'block' : 'none';
+      document.getElementById('invoice-section').style.display = value === 'invoice' ? 'block' : 'none';
+      document.getElementById('order-section').style.display = value === 'order' ? 'block' : 'none';
     });
   </script>
 </body>
