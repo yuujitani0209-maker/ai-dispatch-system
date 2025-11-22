@@ -11,6 +11,10 @@ RUN npm install
 # Copy source code
 COPY . .
 
+# Generate Prisma client and run migrations
+RUN npx prisma generate
+RUN npx prisma migrate deploy --schema=prisma/schema.prisma
+
 # Expose port and start the server
 ENV PORT=8080
 EXPOSE 8080
