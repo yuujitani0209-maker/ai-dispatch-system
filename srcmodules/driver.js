@@ -19,12 +19,17 @@ router.get('/list', async (req, res) => {
   }
 });
 
-// Endpoint to create a new driver
+// Endpoint to create a new driver with optional latitude and longitude
 router.post('/create', async (req, res) => {
   try {
-    const { name, licenseNumber } = req.body;
+    const { name, licenseNumber, lat, lng } = req.body;
     const driver = await prisma.driver.create({
-      data: { name, licenseNumber },
+      data: {
+        name,
+        licenseNumber,
+        lat: lat || null,
+        lng: lng || null,
+      },
     });
     res.json({ message: 'driver created', driver });
   } catch (error) {
