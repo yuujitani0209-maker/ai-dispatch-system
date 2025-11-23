@@ -88,6 +88,10 @@
       <button type="submit">自動配車</button>
     </form>
     <pre id="auto-result"></pre>
+
+    <h3>ドライバー推薦</h3>
+    <button id="recommend-button">ドライバーを推薦</button>
+    <pre id="recommend-result"></pre>
   </div>
 
 <script>
@@ -241,6 +245,16 @@ document.getElementById('auto-form').addEventListener('submit', async e => {
   });
   const data = await res.json();
   document.getElementById('auto-result').textContent = JSON.stringify(data);
+});
+
+// Driver recommendation
+document.getElementById('recommend-button').addEventListener('click', async () => {
+  const res = await fetch('/api/driver/list');
+  const drivers = await res.json();
+  socket.emit('requestRecommendation', { drivers });
+});
+socket.on('recommendation', (driver) => {
+  document.getElementById('recommend-result').textContent = JSON.stringify(driver);
 });
 
 // Department change
