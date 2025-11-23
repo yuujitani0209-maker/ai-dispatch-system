@@ -9,6 +9,13 @@ const driver = require('../srcmodules/driver');
 const invoice = require('../srcmodules/invoice');
 const order = require('../srcmodules/order');
 const ai = require('../srcmodules/ai');
+// optional board module for REST endpoints (to be implemented later)
+let board;
+try {
+  board = require('../srcmodules/board');
+} catch (e) {
+  board = null;
+}
 
 const SECRET_KEY = process.env.SECRET_KEY || 'your_secret_key';
 
@@ -55,13 +62,34 @@ app.use('/api/invoice', authenticateToken, invoice);
 app.use('/api/order', authenticateToken, order);
 app.use('/api/ai', authenticateToken, ai);
 
+// register board routes if available
+if (board) {
+  app.use('/api/board', authenticateToken, board);
+}
+
 io.on('connection', (socket) => {
   console.log('A dispatcher connected');
+  // existing update-board event
   socket.on('update-board', (data) => {
     io.emit('board-updated', data);
   });
+  // new alias event for board updates
+  socket.on('boardUpdate', (data) => {
+    io.emit('boardUpdated', data);
+  });
+  // handle recommendation requests
+  socket.on('requestRecommendation', async (currentState) => {
+    try {
+      const recommendation = ai.getDriverRecommendation
+        ? await ai.getDriverRecommendation(currentState)
+        : null;
+      socket.emit('recommendation', recommendation);
+    } catch (err) {
+      console.error(err);
+    }
+  });
   socket.on('disconnect', () => {
-  console.log('Dispatcher disconnected');
+    console.log('Dispatcher disconnected');
   });
 });
 
