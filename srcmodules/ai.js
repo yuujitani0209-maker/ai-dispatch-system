@@ -34,3 +34,21 @@ router.post('/labor-check', (req, res) => {
 });
 
 module.exports = router;
+
+// Simple driver recommendation function
+router.getDriverRecommendation = async function(currentState) {
+  const drivers = (currentState && currentState.drivers) || [];
+  if (!drivers || drivers.length === 0) {
+    return null;
+  }
+  // Choose driver with maximum availableTime if provided, else first driver
+  let bestDriver = drivers[0];
+  if (drivers[0] && typeof drivers[0] === 'object' && drivers[0].availableTime !== undefined) {
+    for (const d of drivers) {
+      if (d.availableTime > bestDriver.availableTime) {
+        bestDriver = d;
+      }
+    }
+  }
+  return bestDriver;
+};
