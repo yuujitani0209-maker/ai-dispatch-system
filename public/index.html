@@ -1,271 +1,274 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>AI配車ボード</title>
-  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<meta charset="UTF-8">
+<title>AI配車ボード</title>
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 </head>
 <body>
-  <h1>AI配車ボード</h1>
-
-  <!-- 部署選択 -->
-  <label for="department">部署を選択:</label>
-  <select id="department">
-    <option value="dispatch">配車部門</option>
-    <option value="driver">ドライバー部門</option>
-    <option value="invoice">請求書部門</option>
-    <option value="order">注文インポート</option>
-    <option value="ai">AI機能</option>
-  </select>
-
-  <!-- 配車部門 -->
-  <div id="dispatch-section">
-    <h2>配車を作成</h2>
-    <form id="dispatch-form">
-      <input type="text" id="description" placeholder="説明" required>
-      <input type="number" id="driverId" placeholder="ドライバーID（任意）">
-      <button type="submit">配車を作成</button>
-    </form>
-    <ul id="dispatch-list"></ul>
-  </div>
-
-  <!-- ドライバー部門 -->
-  <div id="driver-section" style="display:none;">
-    <h2>ドライバーを作成</h2>
-    <form id="driver-form">
-      <input type="text" id="driver-name" placeholder="ドライバー名" required>
-      <input type="text" id="license-number" placeholder="免許番号" required>
-      <button type="submit">ドライバーを作成</button>
-    </form>
-    <ul id="driver-list"></ul>
-  </div>
-
-  <!-- 請求書部門 -->
-  <div id="invoice-section" style="display:none;">
-    <h2>請求書を作成</h2>
-    <form id="invoice-form">
-      <input type="number" id="invoice-dispatchId" placeholder="配車ID" required>
-      <input type="number" id="amount" placeholder="金額" required>
-      <input type="text" id="status" placeholder="ステータス" required>
-      <button type="submit">請求書を作成</button>
-    </form>
-    <ul id="invoice-list"></ul>
-  </div>
-
-  <!-- 注文インポート部門 -->
-  <div id="order-section" style="display:none;">
-    <h2>注文データをインポート</h2>
-    <form id="order-form">
-      <input type="file" id="order-file" accept=".json,.csv" required>
-      <button type="submit">注文をインポート</button>
-    </form>
-    <ul id="order-list"></ul>
-  </div>
-
-  <!-- AI機能セクション -->
-  <div id="ai-section" style="display:none;">
-    <h2>AI機能</h2>
-
-    <h3>ルート最適化</h3>
-    <form id="route-form">
-      <input type="text" id="stops" placeholder="地点をカンマ区切りで入力">
-      <button type="submit">最適化</button>
-    </form>
-    <pre id="route-result"></pre>
-
-    <h3>労務チェック</h3>
-    <form id="labor-form">
-      <input type="number" id="hoursWorked" placeholder="運転時間">
-      <input type="number" id="breaksTaken" placeholder="休憩時間">
-      <button type="submit">チェック</button>
-    </form>
-    <pre id="labor-result"></pre>
-
-    <h3>自動配車</h3>
-    <form id="auto-form">
-      <textarea id="orders" placeholder='注文をJSON配列で入力'></textarea>
-      <textarea id="drivers" placeholder='ドライバーをJSON配列で入力'></textarea>
-      <button type="submit">自動配車</button>
-    </form>
-    <pre id="auto-result"></pre>
-
-    <h3>ドライバー推薦</h3>
-    <button id="recommend-button">ドライバーを推薦</button>
-    <pre id="recommend-result"></pre>
-  </div>
-
+<h1>AI配車ボード</h1>
+<!-- 部署選択 -->
+<label for="department">部署を選択:</label>
+<select id="department">
+  <option value="dispatch">配車部門</option>
+  <option value="driver">ドライバー部門</option>
+  <option value="invoice">請求書部門</option>
+  <option value="order">注文インポート</option>
+  <option value="ai">AI機能</option>
+  <option value="map">動態管理</option>
+</select>
+<!-- 配車部門 -->
+<div id="dispatch-section">
+  <h2>配車を作成</h2>
+  <form id="dispatch-form">
+    <input type="text" id="description" placeholder="説明" required>
+    <input type="number" id="driverId" placeholder="ドライバーID（任意）">
+    <button type="submit">配車を作成</button>
+  </form>
+  <ul id="dispatch-list"></ul>
+</div>
+<!-- ドライバー部門 -->
+<div id="driver-section" style="display:none;">
+  <h2>ドライバーを作成</h2>
+  <form id="driver-form">
+    <input type="text" id="driver-name" placeholder="ドライバー名" required>
+    <input type="text" id="license-number" placeholder="免許証番号" required>
+    <button type="submit">ドライバーを作成</button>
+  </form>
+  <ul id="driver-list"></ul>
+</div>
+<!-- 請求書部門 -->
+<div id="invoice-section" style="display:none;">
+  <h2>請求書を作成</h2>
+  <form id="invoice-form">
+    <input type="number" id="invoice-dispatchId" placeholder="配車ID" required>
+    <input type="number" id="amount" placeholder="金額" required>
+    <input type="text" id="status" placeholder="ステータス" required>
+    <button type="submit">請求書を作成</button>
+  </form>
+  <ul id="invoice-list"></ul>
+</div>
+<!-- 注文部門 -->
+<div id="order-section" style="display:none;">
+  <h2>注文をインポート</h2>
+  <form id="order-form">
+    <textarea id="order-json" placeholder='[{"description":"荷物A","destination":"東京"}]' required></textarea>
+    <button type="submit">注文をインポート</button>
+  </form>
+</div>
+<!-- AI機能部門 -->
+<div id="ai-section" style="display:none;">
+  <h2>AI機能</h2>
+  <!-- ルート最適化 -->
+  <h3>ルート最適化</h3>
+  <form id="route-opt-form">
+    <textarea id="stops" placeholder="A,B,C" required></textarea>
+    <button type="submit">計算</button>
+  </form>
+  <pre id="route-result"></pre>
+  <!-- 労務チェック -->
+  <h3>労務チェック</h3>
+  <form id="labor-form">
+    <input type="number" id="hours-worked" placeholder="運転時間(時間)" required>
+    <input type="number" id="break-taken" placeholder="休憩時間(時間)" required>
+    <button type="submit">チェック</button>
+  </form>
+  <pre id="labor-result"></pre>
+  <!-- 自動配車 -->
+  <h3>自動配車</h3>
+  <form id="auto-dispatch-form">
+    <textarea id="orders-json" placeholder='[{"id":1,"destination":"大阪"}]' required></textarea>
+    <textarea id="drivers-json" placeholder='[{"id":1,"availableTime":5},{"id":2,"availableTime":3}]' required></textarea>
+    <button type="submit">自動配車</button>
+  </form>
+  <pre id="auto-dispatch-result"></pre>
+  <!-- ドライバー推薦 -->
+  <h3>ドライバー推薦</h3>
+  <button id="recommend-button">ドライバー推薦を取得</button>
+  <pre id="recommend-result"></pre>
+</div>
+<!-- 動態管理マップ部門 -->
+<div id="map-section" style="display:none;">
+  <h2>動態管理マップ</h2>
+  <div id="map" style="height:400px;"></div>
+</div>
 <script>
 const socket = io();
-
-// fetch functions
+function changeSection() {
+  const sections = ['dispatch','driver','invoice','order','ai','map'];
+  const selected = document.getElementById('department').value;
+  sections.forEach(sec => {
+    document.getElementById(sec + '-section').style.display = (sec === selected) ? '' : 'none';
+  });
+  if (selected === 'map') {
+    initMap();
+  }
+}
+document.getElementById('department').addEventListener('change', changeSection);
 async function fetchDispatches() {
-  const res = await fetch('/api/dispatch/list', { headers: { 'Authorization': '' }});
+  const res = await fetch('/api/dispatch');
   const data = await res.json();
   const list = document.getElementById('dispatch-list');
   list.innerHTML = '';
-  data.forEach(d => {
+  data.forEach(item => {
     const li = document.createElement('li');
-    li.textContent = JSON.stringify(d);
+    li.textContent = item.id + ': ' + item.description + ' ['+item.status+']';
     list.appendChild(li);
   });
 }
 async function fetchDrivers() {
-  const res = await fetch('/api/driver/list', { headers: { 'Authorization': '' }});
+  const res = await fetch('/api/driver');
   const data = await res.json();
   const list = document.getElementById('driver-list');
   list.innerHTML = '';
-  data.forEach(d => {
+  data.forEach(item => {
     const li = document.createElement('li');
-    li.textContent = JSON.stringify(d);
+    li.textContent = item.id + ': ' + item.name;
     list.appendChild(li);
   });
 }
 async function fetchInvoices() {
-  const res = await fetch('/api/invoice/list', { headers: { 'Authorization': '' }});
+  const res = await fetch('/api/invoice');
   const data = await res.json();
   const list = document.getElementById('invoice-list');
   list.innerHTML = '';
-  data.forEach(inv => {
+  data.forEach(item => {
     const li = document.createElement('li');
-    li.textContent = JSON.stringify(inv);
+    li.textContent = item.id + ': ' + item.amount;
     list.appendChild(li);
   });
 }
-// call fetch functions
-fetchDispatches();
-fetchDrivers();
-fetchInvoices();
 socket.on('board-updated', () => {
   fetchDispatches();
 });
-
-// dispatch form
 document.getElementById('dispatch-form').addEventListener('submit', async e => {
   e.preventDefault();
   const description = document.getElementById('description').value;
   const driverId = document.getElementById('driverId').value;
   await fetch('/api/dispatch/create', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': '' },
-    body: JSON.stringify({ description, driverId: driverId ? Number(driverId) : null, status: 'pending' })
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({description, driverId: driverId? Number(driverId): null, status:'pending'})
   });
-  document.getElementById('description').value = '';
-  document.getElementById('driverId').value = '';
+  document.getElementById('description').value='';
+  document.getElementById('driverId').value='';
   fetchDispatches();
 });
-// driver form
 document.getElementById('driver-form').addEventListener('submit', async e => {
   e.preventDefault();
   const name = document.getElementById('driver-name').value;
   const licenseNumber = document.getElementById('license-number').value;
   await fetch('/api/driver/create', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': '' },
-    body: JSON.stringify({ name, licenseNumber })
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({name, licenseNumber})
   });
-  document.getElementById('driver-name').value = '';
-  document.getElementById('license-number').value = '';
+  document.getElementById('driver-name').value='';
+  document.getElementById('license-number').value='';
   fetchDrivers();
 });
-// invoice form
 document.getElementById('invoice-form').addEventListener('submit', async e => {
   e.preventDefault();
   const dispatchId = Number(document.getElementById('invoice-dispatchId').value);
   const amount = Number(document.getElementById('amount').value);
   const status = document.getElementById('status').value;
   await fetch('/api/invoice/create', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': '' },
-    body: JSON.stringify({ dispatchId, amount, status })
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({dispatchId, amount, status})
   });
-  document.getElementById('invoice-dispatchId').value = '';
-  document.getElementById('amount').value = '';
-  document.getElementById('status').value = '';
+  document.getElementById('invoice-dispatchId').value='';
+  document.getElementById('amount').value='';
+  document.getElementById('status').value='';
   fetchInvoices();
 });
-// order import form
-document.getElementById('order-form').addEventListener('submit', async e => {
+document.getElementById('order-form').addEventListener('submit', async e=>{
   e.preventDefault();
-  const fileInput = document.getElementById('order-file');
-  const formData = new FormData();
-  formData.append('file', fileInput.files[0]);
+  const orderJson = document.getElementById('order-json').value;
+  const orders = JSON.parse(orderJson);
   await fetch('/api/order/import', {
-    method: 'POST',
-    headers: { 'Authorization': '' },
-    body: formData
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({orders})
   });
-  fileInput.value = '';
-  fetchDispatches();
+  document.getElementById('order-json').value='';
 });
-
-// AI route optimization
-document.getElementById('route-form').addEventListener('submit', async e => {
+document.getElementById('route-opt-form').addEventListener('submit', async e=>{
   e.preventDefault();
-  const stopsStr = document.getElementById('stops').value;
-  const stops = stopsStr ? stopsStr.split(',').map(s => s.trim()) : [];
+  const stops = document.getElementById('stops').value.split(',');
   const res = await fetch('/api/ai/route-optimize', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ stops })
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({stops})
   });
-  const data = await res.json();
-  document.getElementById('route-result').textContent = JSON.stringify(data);
+  const result = await res.json();
+  document.getElementById('route-result').textContent = JSON.stringify(result, null, 2);
 });
-
-// Labor check
-document.getElementById('labor-form').addEventListener('submit', async e => {
+document.getElementById('labor-form').addEventListener('submit', async e=>{
   e.preventDefault();
-  const hoursWorked = Number(document.getElementById('hoursWorked').value);
-  const breaksTaken = Number(document.getElementById('breaksTaken').value);
+  const hoursWorked = Number(document.getElementById('hours-worked').value);
+  const breakTaken = Number(document.getElementById('break-taken').value);
   const res = await fetch('/api/ai/labor-check', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ hoursWorked, breaksTaken })
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({hoursWorked, breakTaken})
   });
-  const data = await res.json();
-  document.getElementById('labor-result').textContent = JSON.stringify(data);
+  const result = await res.json();
+  document.getElementById('labor-result').textContent = JSON.stringify(result, null, 2);
 });
-
-// Auto dispatch
-document.getElementById('auto-form').addEventListener('submit', async e => {
+document.getElementById('auto-dispatch-form').addEventListener('submit', async e=>{
   e.preventDefault();
-  let orders;
-  let drivers;
-  try {
-    orders = JSON.parse(document.getElementById('orders').value || '[]');
-    drivers = JSON.parse(document.getElementById('drivers').value || '[]');
-  } catch (e) {
-    alert('JSONの形式が正しくありません');
-    return;
-  }
+  const orders = JSON.parse(document.getElementById('orders-json').value);
+  const drivers = JSON.parse(document.getElementById('drivers-json').value);
   const res = await fetch('/api/ai/auto-dispatch', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ orders, drivers })
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({orders, drivers})
   });
-  const data = await res.json();
-  document.getElementById('auto-result').textContent = JSON.stringify(data);
+  const result = await res.json();
+  document.getElementById('auto-dispatch-result').textContent = JSON.stringify(result, null, 2);
 });
-
-// Driver recommendation
-document.getElementById('recommend-button').addEventListener('click', async () => {
-  const res = await fetch('/api/driver/list');
-  const drivers = await res.json();
-  socket.emit('requestRecommendation', { drivers });
+document.getElementById('recommend-button').addEventListener('click', () => {
+  fetch('/api/driver')
+    .then(res=>res.json())
+    .then(drivers=>{
+      socket.emit('requestRecommendation', {drivers});
+    });
 });
-socket.on('recommendation', (driver) => {
-  document.getElementById('recommend-result').textContent = JSON.stringify(driver);
+socket.on('recommendation', (data) => {
+  document.getElementById('recommend-result').textContent = JSON.stringify(data, null, 2);
 });
-
-// Department change
-document.getElementById('department').addEventListener('change', e => {
-  const value = e.target.value;
-  document.getElementById('dispatch-section').style.display = value === 'dispatch' ? 'block' : 'none';
-  document.getElementById('driver-section').style.display = value === 'driver' ? 'block' : 'none';
-  document.getElementById('invoice-section').style.display = value === 'invoice' ? 'block' : 'none';
-  document.getElementById('order-section').style.display = value === 'order' ? 'block' : 'none';
-  document.getElementById('ai-section').style.display = value === 'ai' ? 'block' : 'none';
-});
+// Map initialization
+let map;
+function initMap() {
+  if (map) return;
+  map = L.map('map').setView([34.6937, 135.5023], 6);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution:'&copy; OpenStreetMap contributors'
+  }).addTo(map);
+  updateMapMarkers();
+}
+function updateMapMarkers() {
+  fetch('/api/driver')
+    .then(res=>res.json())
+    .then(drivers=>{
+      if (map && map._layers) {
+        Object.keys(map._layers).forEach(key=>{
+          const layer = map._layers[key];
+          if (layer instanceof L.Marker) {
+            map.removeLayer(layer);
+          }
+        });
+      }
+      drivers.forEach(driver=>{
+        if (driver.lat && driver.lng) {
+          L.marker([driver.lat, driver.lng]).addTo(map).bindPopup(driver.name || '');
+        }
+      });
+    });
+}
 </script>
 </body>
 </html>
